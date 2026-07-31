@@ -94,16 +94,22 @@ class WorxMower extends IPSModule
         $this->Command($cmd);
     }
 
-    /** Schickt einen Rohbefehl, z.B. 1 = Start, 2 = Pause, 3 = Heimfahrt. */
+    /**
+     * Schickt einen Rohbefehl, z.B. 1 = Start, 2 = Pause, 3 = Heimfahrt.
+     *
+     * Bewusst als direkter Funktionsaufruf an die Cloud-Instanz statt über
+     * SendDataToParent: Die Cloud müsste in ihrem ForwardData ihrerseits ein
+     * SendDataToParent an den MQTT Client absetzen, und dieses verschachtelte
+     * Weiterreichen liefert in Symcon keinen Rückgabewert.
+     */
     public function Command(int $Command): bool
     {
-        $result = $this->SendDataToParent(json_encode([
-            'DataID'  => self::IF_CLOUD,
-            'Command' => 'Command',
-            'Serial'  => $this->ReadPropertyString('Serial'),
-            'Payload' => json_encode(['cmd' => $Command]),
-        ]));
-        $ok = json_decode((string) $result, true) === true;
+        $parent = (int) IPS_GetInstance($this->InstanceID)['ConnectionID'];
+        if ($parent === 0) {
+            $this->SendDebug('Befehl', 'Keine Verbindung zur Worx-Cloud-Instanz', 0);
+            return false;
+        }
+        $ok = WORX_SendCommand($parent, $this->ReadPropertyString('Serial'), json_encode(['cmd' => $Command]));
         if (!$ok) {
             $this->SendDebug('Befehl', "cmd=$Command konnte nicht gesendet werden", 0);
         }

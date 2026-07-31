@@ -256,7 +256,11 @@ class WorxCloud extends IPSModule
 
     private function publish(string $topic, string $payload): bool
     {
-        if ($this->getParent() === 0) {
+        $parent = $this->getParent();
+        // Nicht nur "verknüpft", sondern auch "verbunden" prüfen — sonst quittiert
+        // Symcon jeden Sendeversuch während des Verbindungsaufbaus mit einer Warnung.
+        if ($parent === 0 || IPS_GetInstance($parent)['InstanceStatus'] !== IS_ACTIVE) {
+            $this->SendDebug('Publish', 'MQTT-Verbindung nicht bereit — verworfen', 0);
             return false;
         }
         $this->SendDebug('Publish', $topic . ' ' . $payload, 0);
