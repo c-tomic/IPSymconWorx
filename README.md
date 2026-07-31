@@ -24,9 +24,36 @@ Damit entfallen Node.js, der systemd-Dienst und der MQTT-Umweg über den lokalen
 
 | Instanz | Aufgabe |
 |---|---|
-| **Worx Cloud** | Anmeldung, Token-Verwaltung, regelmäßiges Abfragen |
+| **Worx Cloud** | Anmeldung, Token-Verwaltung, Abfrage, MQTT-Verteilung |
 | **Worx Configurator** | findet die Mäher des Kontos und legt sie an |
-| **Worx Mower** | ein Mähroboter mit seinen Variablen |
+| **Worx Mower** | ein Mähroboter mit Variablen und Steuerung |
+
+Darunter liegt eine Transportkette aus Symcon-Bordmitteln, die das Modul selbst
+anlegt und pflegt:
+
+```
+WS Client  ─▶  MQTT Client  ─▶  Worx Cloud  ─▶  Worx Mower
+```
+
+## Echtzeit und Steuerung
+
+Der Zustand kommt über zwei Wege: **MQTT** liefert ihn in dem Moment, in dem der
+Mäher ihn meldet, **REST** dient als Bestandsabfrage und Rückfallebene. Steuerbefehle
+(Start, Pause, Heimfahrt) laufen ausschließlich über MQTT — per REST nimmt die Worx-Cloud
+sie zwar mit HTTP 200 entgegen, führt sie aber nicht aus (nachgemessen: ein `cmd` mit
+Unsinnswert wird ebenso kommentarlos geschluckt, während echte Felder mit HTTP 422
+abgelehnt werden).
+
+MQTT spricht AWS IoT über WebSocket. Zwei Details entscheiden über Erfolg:
+
+- Der Handshake braucht das Subprotokoll `Sec-WebSocket-Protocol: mqtt`. Fehlt es,
+  antwortet AWS mit **HTTP 426** und die Verbindung kommt nie zustande.
+- Die Auth-Header werden aus dem Zugangs-Token abgeleitet (base64url → base64,
+  an den Punkten zerlegt) und laufen nach einer Stunde ab. Das Modul erneuert sie
+  alle 45 Minuten selbsttätig.
+
+Es fallen **keine AWS-Kosten** an: Die Infrastruktur gehört Worx, das Modul meldet
+sich dort lediglich als Client an — genau wie die Landroid-App.
 
 ## Installation
 
@@ -49,14 +76,13 @@ Sperre, aktuelle Zone, Firmware und Zeitpunkt der letzten Meldung.
 Status- und Fehlercodes werden in Klartext übersetzt („Mäht", „In der Ladestation",
 „Messermotor blockiert" …).
 
-## Grenzen
+## Abfrageintervall
 
-Dieses Modul **liest** den Zustand. Steuerbefehle (Start, Pause, Heimfahrt) laufen bei
-Worx über AWS IoT MQTT mit Custom-Auth-Headern — das ist als nächster Schritt geplant,
-aber noch nicht enthalten.
-
-Das Abfrageintervall steht standardmäßig auf 120 Sekunden. Deutlich kürzere Intervalle
-sind nicht ratsam: Worx sperrt Konten bei zu häufigen Abfragen zeitweise aus.
+Mit aktivem MQTT genügt ein großes Intervall (Standard 300 s) — der Zustand kommt
+von selbst. Häufigeres Abfragen bringt ohnehin wenig: Die REST-API liefert nur den
+letzten Stand, den der Mäher von sich aus gemeldet hat, und der ist oft einige Minuten
+alt. Worx begrenzt auf **2880 Abfragen pro Tag** (`X-RateLimit-Limit`), was einer
+Abfrage alle 30 Sekunden entspricht.
 
 ## Hinweis
 
