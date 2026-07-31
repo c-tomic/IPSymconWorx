@@ -71,6 +71,12 @@ class WorxCloud extends IPSModule
      */
     public function Poll(): bool
     {
+        if ($this->ReadPropertyString('Email') === '' || $this->ReadPropertyString('Password') === '') {
+            // Sonst meldete ein Poll ohne Zugangsdaten "Anmeldung fehlgeschlagen"
+            $this->SetStatus(104);
+            return false;
+        }
+
         $token = $this->getToken();
         if ($token === '') {
             $this->SetStatus(201); // Login fehlgeschlagen
