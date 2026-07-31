@@ -214,7 +214,9 @@ class WorxCloud extends IPSModule
         $subs = [];
         foreach ($devices as $d) {
             if (isset($d['mqtt_topics']['command_out'])) {
-                $subs[] = ['Topic' => $d['mqtt_topics']['command_out'], 'QoS' => 1];
+                // QoS 0: Symcons MQTT Client unterstützt (Stand 9.0) nichts anderes —
+                // ein Abonnement mit QoS 1 wird kommentarlos nicht bedient.
+                $subs[] = ['Topic' => $d['mqtt_topics']['command_out'], 'QoS' => 0];
             }
         }
         $this->setIfChanged($mqtt, [
@@ -267,7 +269,7 @@ class WorxCloud extends IPSModule
         $this->SendDataToParent(json_encode([
             'DataID'           => self::IF_MQTT_TX,
             'PacketType'       => 3,   // PUBLISH
-            'QualityOfService' => 1,
+            'QualityOfService' => 0,
             'Retain'           => false,
             'Topic'            => $topic,
             'Payload'          => $payload,
