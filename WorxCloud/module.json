@@ -1,0 +1,22 @@
+{
+    "id": "{09B3E1A6-0D6F-4452-B1A2-5D4C9794BF34}",
+    "name": "Worx Cloud",
+    "type": 1,
+    "vendor": "Worx",
+    "aliases": [
+        "Worx Landroid Cloud",
+        "Kress Cloud",
+        "Landxcape Cloud"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [
+        "{01E8C2C0-BB9C-4615-AD25-A78E12D842F0}",
+        "{5279818E-0317-46AB-A451-0683BEBC6E90}"
+    ],
+    "implemented": [
+        "{01E8C2C0-BB9C-4615-AD25-A78E12D842F0}",
+        "{5279818E-0317-46AB-A451-0683BEBC6E90}"
+    ],
+    "prefix": "WORX",
+    "url": "https://github.com/c-tomic/IPSymconWorx"
+}

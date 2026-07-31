@@ -1,0 +1,19 @@
+{
+    "id": "{474B5876-AE7B-45B8-A774-A758AA741D49}",
+    "name": "Worx Mower",
+    "type": 3,
+    "vendor": "Worx",
+    "aliases": [
+        "Worx Landroid",
+        "Landroid Mähroboter"
+    ],
+    "parentRequirements": [
+        "{01E8C2C0-BB9C-4615-AD25-A78E12D842F0}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{01E8C2C0-BB9C-4615-AD25-A78E12D842F0}"
+    ],
+    "prefix": "WORXMOWER",
+    "url": "https://github.com/c-tomic/IPSymconWorx"
+}

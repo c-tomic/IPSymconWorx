@@ -1,0 +1,18 @@
+{
+    "id": "{A6ECA3F5-27C6-43CB-899D-34EFADB52089}",
+    "name": "Worx Configurator",
+    "type": 4,
+    "vendor": "Worx",
+    "aliases": [
+        "Worx Landroid Configurator"
+    ],
+    "parentRequirements": [
+        "{5279818E-0317-46AB-A451-0683BEBC6E90}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{5279818E-0317-46AB-A451-0683BEBC6E90}"
+    ],
+    "prefix": "WORXCONF",
+    "url": "https://github.com/c-tomic/IPSymconWorx"
+}
