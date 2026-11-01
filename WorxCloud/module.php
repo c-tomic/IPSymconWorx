@@ -25,6 +25,9 @@ class WorxCloud extends IPSModule
     private const AUTH_URL  = 'https://id.worx.com/oauth/token';
     private const CLIENT_ID = '150da4d2-bb44-433b-9429-3773adc70a2a';
 
+    /** Takt von WorxAuth. Der Token im WS-Header muss bis zum nächsten Lauf halten. */
+    private const AUTH_INTERVAL_S = 45 * 60;
+
     private const GUID_WS       = '{D68FD31F-0E90-7019-F16C-1949BD3079EF}'; // WS Client (I/O)
     private const GUID_MQTT     = '{F7A0DD2E-7684-95C0-64C2-D2A9DC47577B}'; // MQTT Client (Splitter)
     private const IF_MQTT_TX    = '{043EA491-0325-4ADD-8FC2-A30C8EEB4D3F}'; // an den MQTT Client senden
@@ -78,7 +81,7 @@ class WorxCloud extends IPSModule
         $this->WriteAttributeInteger('TokenExpires', 0);
 
         $this->SetTimerInterval('WorxPoll', max(30, $this->ReadPropertyInteger('Interval')) * 1000);
-        $this->SetTimerInterval('WorxAuth', $this->ReadPropertyBoolean('UseMQTT') ? 45 * 60 * 1000 : 0);
+        $this->SetTimerInterval('WorxAuth', $this->ReadPropertyBoolean('UseMQTT') ? self::AUTH_INTERVAL_S * 1000 : 0);
 
         if (IPS_GetKernelRunlevel() !== KR_READY) {
             return;
@@ -157,14 +160,17 @@ class WorxCloud extends IPSModule
      * Richtet die WS-/MQTT-Kette ein und erneuert die Auth-Header.
      *
      * Läuft auch turnusmäßig per Timer, weil die Header aus dem Token abgeleitet
-     * sind und mit ihm ablaufen.
+     * sind und mit ihm ablaufen. Darum verlangt dieser Weg einen Token, der den
+     * nächsten Lauf erlebt: Ein 45 min alter Token ist zwar noch gültig, liefe aber
+     * 15 min später ab, und bis zum nächsten Lauf verbände sich der WS Client im
+     * Minutentakt mit einem abgelaufenen Header neu.
      */
     public function RefreshTransport(): bool
     {
         if (!$this->ReadPropertyBoolean('UseMQTT')) {
             return false;
         }
-        $token = $this->getToken();
+        $token = $this->getToken(self::AUTH_INTERVAL_S + 60);
         if ($token === '') {
             return false;
         }
@@ -368,10 +374,10 @@ class WorxCloud extends IPSModule
         }
     }
 
-    private function getToken(): string
+    private function getToken(int $mindestensGueltig = 60): string
     {
         $token = $this->ReadAttributeString('AccessToken');
-        if ($token !== '' && $this->ReadAttributeInteger('TokenExpires') > time() + 60) {
+        if ($token !== '' && $this->ReadAttributeInteger('TokenExpires') > time() + $mindestensGueltig) {
             return $token;
         }
 
